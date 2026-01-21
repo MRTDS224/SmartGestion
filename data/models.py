@@ -16,6 +16,7 @@ class User(Base):
     hashed_password = Column(String)
     role = Column(String, default=UserRole.EMPLOYEE.value)
     must_change_password = Column(Boolean, default=True)
+    password_reset_requested = Column(Boolean, default=False)
     # role should store the value of the enum, e.g., 'admin' or 'employee'
 
 class Category(Base):

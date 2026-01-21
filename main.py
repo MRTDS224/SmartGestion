@@ -5,7 +5,7 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
 from kivymd.uix.textfield import MDTextField
-from kivymd.uix.button import MDFillRoundFlatButton, MDIconButton
+from kivymd.uix.button import MDFillRoundFlatButton, MDIconButton, MDFlatButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.datatables import MDDataTable
 from kivymd.uix.list import OneLineIconListItem, IconLeftWidget
@@ -76,6 +76,14 @@ KV = '''
             font_size: "12sp"
             pos_hint: {"center_x": 0.5}
             on_release: root.do_login()
+            
+        MDFlatButton:
+            text: "Mot de passe oublié ?"
+            font_size: "10sp"
+            pos_hint: {"center_x": 0.5}
+            theme_text_color: "Custom"
+            text_color: "blue"
+            on_release: root.show_forgot_password_dialog()
 
 <DashboardScreen>:
     name: "dashboard"
@@ -234,26 +242,19 @@ class LoginScreen(MDScreen):
             self.manager.current = "main"
             self.manager.get_screen("main").ids.nav_username.text = f"{user.username} ({user.role})"
             
-            # Check permissions and hide admin menu
+            # Security: Disable "Gestion Utilisateurs" if not admin
             main_screen = self.manager.get_screen("main")
-            # We can't verify IDs here easily because list items are dynamic? 
-            # Actually they are in KV.
-            # But "nav_users_item" needs to be hidden if not admin.
-            # KivyMD List items don't have easy "visible" property that collapses layout?
-            # We can remove the widget?
+            # Access the item via ID defined in KV
+            users_item = main_screen.ids.nav_users_item
             
-            # Better approach: Check in on_start of MainApp or use a binding.
-            # For MVP: Let's handle it in do_login by accessing the widget.
-            
-            nav_list = main_screen.ids.nav_drawer.children[0].children[0].children[0] 
-            # This is fragile navigation to MDList.
-            # Let's rely on ID if possible.
-            # The structure is MDNavigationDrawer -> MDBoxLayout -> ScrollView -> MDList
-            
-            # Alternative: Permission check in on_release (simpler)
-            # But hiding is better.
-            
-            # Let's verify password change
+            if user.role != "admin":
+                users_item.disabled = True
+                users_item.opacity = 0.5 # Visual cue
+            else:
+                users_item.disabled = False
+                users_item.opacity = 1.0
+
+            # Check for reset request or forced change
             if user.must_change_password:
                 MDApp.get_running_app().root.get_screen("main").ids.inner_screen_manager.current = "profile"
                 from kivymd.toast import toast
@@ -261,10 +262,58 @@ class LoginScreen(MDScreen):
             
             MDApp.get_running_app().refresh_dashboard()
         else:
-            self.show_error("Nom d'utilisateur ou mot de passe incorrect")
+             from kivymd.toast import toast
+             toast("Nom d'utilisateur ou mot de passe incorrect")
+    
+    def open_users_screen(self):
+        # Helper for the lambda above if we re-add
+        app = MDApp.get_running_app()
+        app.root.get_screen("main").ids.inner_screen_manager.current = "users"
+        app.root.get_screen("main").ids.nav_drawer.set_state("close")
 
     def show_error(self, message):
-        self.ids.welcome_label.text = message
+        # Deprecated by toast, keeping blank or removing usage
+        pass
+
+    def show_forgot_password_dialog(self):
+        self.dialog = MDDialog(
+            title="Mot de passe oublié ?",
+            type="custom",
+            content_cls=MDTextField(
+                id="reset_username",
+                hint_text="Nom d'utilisateur",
+            ),
+            buttons=[
+                MDFlatButton(
+                    text="ANNULER",
+                    on_release=lambda x: self.dialog.dismiss()
+                ),
+                MDFillRoundFlatButton(
+                    text="ENVOYER DEMANDE",
+                    on_release=self.send_reset_request
+                ),
+            ],
+        )
+        self.dialog.open()
+
+    def send_reset_request(self, *args):
+        # Access the textfield inside content_cls
+        # MDDialog content_cls is the instance we passed
+        textfield = self.dialog.content_cls
+        username = textfield.text
+        
+        if not username:
+            return
+
+        db = SessionLocal()
+        if crud.request_password_reset(db, username):
+            from kivymd.toast import toast
+            toast("Demande envoyée à l'administrateur")
+        else:
+            from kivymd.toast import toast
+            toast("Utilisateur introuvable")
+        db.close()
+        self.dialog.dismiss()
 
 class DashboardScreen(MDScreen):
     pass

@@ -45,11 +45,56 @@ def delete_user(db: Session, user_id: int):
         return True
     return False
 
-def update_user_password(db: Session, user_id: int, new_password: str):
+def update_user_profile(db: Session, user_id: int, username: str = None, old_password: str = None, new_password: str = None):
     user = db.query(models.User).filter(models.User.id == user_id).first()
-    if user:
+    if not user:
+        return False, "Utilisateur introuvable"
+    
+    # Update username if provided
+    if username and username != user.username:
+        # Check uniqueness
+        existing_user = get_user_by_username(db, username)
+        if existing_user:
+            return False, "Nom d'utilisateur déjà pris"
+        user.username = username
+
+    # Update password if provided
+    if new_password:
+        if not old_password:
+             return False, "Ancien mot de passe requis"
+        if not verify_password(old_password, user.hashed_password):
+             return False, "Ancien mot de passe incorrect"
+        
         user.hashed_password = get_password_hash(new_password)
         user.must_change_password = False
+    
+    db.commit()
+    db.refresh(user)
+    return True, "Profil mis à jour"
+
+def admin_reset_password(db: Session, user_id: int):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        user.hashed_password = get_password_hash("123456")
+        user.must_change_password = True
+        user.password_reset_requested = False
+        db.commit()
+        db.refresh(user)
+        return True
+    return False
+
+def request_password_reset(db: Session, username: str):
+    user = get_user_by_username(db, username)
+    if user:
+        user.password_reset_requested = True
+        db.commit()
+        return True
+    return False
+
+def change_user_role(db: Session, user_id: int, new_role: str):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        user.role = new_role
         db.commit()
         db.refresh(user)
         return True
