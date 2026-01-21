@@ -19,13 +19,21 @@ class SalesHistoryScreen(MDScreen):
 
         table_data = []
         for s in sales:
-            # Format: ID, Date, Vendeur, Montant Total
+            # Format: ID, Date, Vendeur, Produits, Montant Total
             formatted_date = s.timestamp.strftime("%Y-%m-%d %H:%M")
             username = s.user.username if s.user else "Unknown"
+            
+            items_str_list = []
+            for item in s.items:
+                 p_name = item.product.name if item.product else "Deleted"
+                 items_str_list.append(f"{p_name} (x{item.quantity})")
+            items_display = ", ".join(items_str_list)
+            
             table_data.append((
                 str(s.id),
                 formatted_date,
                 username,
+                items_display,
                 f"{s.total_amount} GNF"
             ))
 
@@ -35,8 +43,9 @@ class SalesHistoryScreen(MDScreen):
             use_pagination=True,
             column_data=[
                 ("ID", dp(10)),
-                ("Date", dp(40)),
-                ("Vendeur", dp(30)),
+                ("Date", dp(30)),
+                ("Vendeur", dp(20)),
+                ("Produits", dp(50)),
                 ("Total", dp(20)),
             ],
             row_data=table_data,

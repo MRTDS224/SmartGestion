@@ -115,4 +115,7 @@ def process_sale(db: Session, user_id: int, items: list):
     return new_sale
 
 def get_sales_history(db: Session):
-    return db.query(models.Sale).options(joinedload(models.Sale.user)).order_by(models.Sale.timestamp.desc()).all()
+    return db.query(models.Sale).options(
+        joinedload(models.Sale.user),
+        joinedload(models.Sale.items).joinedload(models.SaleItem.product)
+    ).order_by(models.Sale.timestamp.desc()).all()
