@@ -1,0 +1,126 @@
+<UsersScreen>:
+    name: "users"
+    MDBoxLayout:
+        orientation: 'vertical'
+        
+        MDTopAppBar:
+            title: "Gestion Utilisateurs"
+            left_action_items: [["menu", lambda x: app.root.get_screen("main").ids.nav_drawer.set_state("open")]]
+            right_action_items: [["plus", lambda x: root.show_add_user_dialog()]]
+            
+        MDBoxLayout:
+            padding: dp(10)
+            spacing: dp(10)
+
+            # Left Panel: List of Users
+            MDCard:
+                size_hint_x: 0.4
+                orientation: 'vertical'
+                padding: "8dp"
+                elevation: 2
+                
+                MDLabel:
+                    text: "Liste des Utilisateurs"
+                    font_style: "H6"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                    padding_y: "10dp"
+
+                RecycleView:
+                    id: users_rv
+                    viewclass: 'UserItem'
+                    RecycleBoxLayout:
+                        default_size: None, dp(56)
+                        default_size_hint: 1, None
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: 'vertical'
+
+            # Right Panel: User Details & Actions
+            MDCard:
+                id: detail_panel
+                size_hint_x: 0.6
+                orientation: 'vertical'
+                padding: "20dp"
+                spacing: "15dp"
+                elevation: 2
+                
+                MDLabel:
+                    text: "Détails Utilisateur"
+                    font_style: "H5"
+                    halign: "center"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    spacing: "10dp"
+                    adaptive_height: True
+
+                    MDTextField:
+                        id: detail_username
+                        hint_text: "Nom d'utilisateur"
+                        readonly: True
+                        
+                    MDTextField:
+                        id: detail_role
+                        hint_text: "Rôle"
+                        readonly: True
+                        
+                    MDLabel:
+                        id: detail_status
+                        text: "Statut: --"
+                        theme_text_color: "Secondary"
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    spacing: "10dp"
+                    padding: [0, 20, 0, 0]
+                    
+                    MDFillRoundFlatButton:
+                        id: btn_reset_pwd
+                        text: "RÉINITIALISER MOT DE PASSE"
+                        on_release: root.reset_password()
+                        size_hint_x: 1
+                        disabled: True
+                        
+                    MDFillRoundFlatButton:
+                        id: btn_change_role
+                        text: "CHANGER RÔLE (Promouvoir/Rétrograder)"
+                        on_release: root.toggle_role()
+                        size_hint_x: 1
+                        disabled: True
+                        
+                    MDFillRoundFlatButton:
+                        id: btn_delete
+                        text: "SUPPRIMER"
+                        on_release: root.delete_user()
+                        md_bg_color: 1, 0, 0, 1
+                        size_hint_x: 1
+                        disabled: True
+
+                Widget: # Spacer
+
+<UserItem@OneLineAvatarIconListItem>:
+    text: ""
+    secondary_text: ""
+    on_release: app.root.get_screen("main").ids.inner_screen_manager.get_screen("users").select_user(root.user_id)
+    IconLeftWidget:
+        icon: root.icon_name
+
+<AddUserContent>:
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "120dp"
+
+    MDTextField:
+        id: username
+        hint_text: "Nom d'utilisateur"
+    
+    MDLabel:
+        text: "Mot de passe par défaut: 123456"
+        font_style: "Caption"
+        theme_text_color: "Secondary"

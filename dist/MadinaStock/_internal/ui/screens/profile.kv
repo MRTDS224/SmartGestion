@@ -1,0 +1,64 @@
+<ProfileScreen>:
+    name: "profile"
+    MDBoxLayout:
+        orientation: 'vertical'
+        
+        MDTopAppBar:
+            title: "Mon Profil"
+            left_action_items: [["menu", lambda x: app.root.get_screen("main").ids.nav_drawer.set_state("open")]]
+            
+        ScrollView:
+            MDBoxLayout:
+                orientation: 'vertical'
+                padding: dp(20)
+                spacing: dp(20)
+                adaptive_height: True
+                
+                MDLabel:
+                    id: profile_info
+                    text: "Utilisateur: --"
+                    halign: "center"
+                    font_style: "H6"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                
+                MDCard:
+                    orientation: 'vertical'
+                    padding: dp(20)
+                    spacing: dp(15)
+                    size_hint_y: None
+                    height: dp(400)
+                    pos_hint: {"center_x": .5}
+                    
+                    MDLabel:
+                        text: "Modifier mes informations"
+                        halign: "center"
+                        theme_text_color: "Primary"
+                    
+                    MDTextField:
+                        id: username
+                        hint_text: "Nom d'utilisateur"
+                        icon_right: "account"
+                    
+                    MDTextField:
+                        id: old_password
+                        hint_text: "Ancien mot de passe (Requis)"
+                        password: True
+                        icon_right: "lock"
+                        
+                    MDTextField:
+                        id: new_password
+                        hint_text: "Nouveau mot de passe"
+                        password: True
+                        icon_right: "lock-plus"
+                        
+                    MDTextField:
+                        id: confirm_password
+                        hint_text: "Confirmer le mot de passe"
+                        password: True
+                        icon_right: "lock-check"
+                        
+                    MDFillRoundFlatButton:
+                        text: "ENREGISTRER LES MODIFICATIONS"
+                        pos_hint: {"center_x": .5}
+                        on_release: root.update_profile()
