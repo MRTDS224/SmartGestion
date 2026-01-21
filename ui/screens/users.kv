@@ -1,0 +1,28 @@
+<UsersScreen>:
+    name: "users"
+    MDBoxLayout:
+        orientation: 'vertical'
+        
+        MDTopAppBar:
+            title: "Gestion Utilisateurs"
+            left_action_items: [["menu", lambda x: app.root.get_screen("main").ids.nav_drawer.set_state("open")]]
+            right_action_items: [["plus", lambda x: root.show_add_user_dialog()]]
+            
+        MDBoxLayout:
+            id: users_box
+            padding: dp(10)
+
+<AddUserContent>:
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "120dp"
+
+    MDTextField:
+        id: username
+        hint_text: "Nom d'utilisateur"
+    
+    MDLabel:
+        text: "Mot de passe par défaut: 123456"
+        font_style: "Caption"
+        theme_text_color: "Secondary"

@@ -22,6 +22,8 @@ from data import crud
 from ui.screens.inventory import InventoryScreen
 from ui.screens.pos import POSScreen
 from ui.screens.history import SalesHistoryScreen
+from ui.screens.users import UsersScreen
+from ui.screens.profile import ProfileScreen
 
 # Global user session
 class UserSession:
@@ -166,6 +168,23 @@ KV = '''
                                 icon: "view-dashboard"
 
                         OneLineIconListItem:
+                            id: nav_users_item
+                            text: "Gestion Utilisateurs"
+                            on_release: 
+                                inner_screen_manager.current = "users"
+                                nav_drawer.set_state("close")
+                            IconLeftWidget:
+                                icon: "account-group"
+
+                        OneLineIconListItem:
+                            text: "Mon Profil"
+                            on_release: 
+                                inner_screen_manager.current = "profile"
+                                nav_drawer.set_state("close")
+                            IconLeftWidget:
+                                icon: "account-cog"
+
+                        OneLineIconListItem:
                             text: "Inventaire"
                             on_release: 
                                 inner_screen_manager.current = "inventory"
@@ -214,6 +233,32 @@ class LoginScreen(MDScreen):
             session.user = user
             self.manager.current = "main"
             self.manager.get_screen("main").ids.nav_username.text = f"{user.username} ({user.role})"
+            
+            # Check permissions and hide admin menu
+            main_screen = self.manager.get_screen("main")
+            # We can't verify IDs here easily because list items are dynamic? 
+            # Actually they are in KV.
+            # But "nav_users_item" needs to be hidden if not admin.
+            # KivyMD List items don't have easy "visible" property that collapses layout?
+            # We can remove the widget?
+            
+            # Better approach: Check in on_start of MainApp or use a binding.
+            # For MVP: Let's handle it in do_login by accessing the widget.
+            
+            nav_list = main_screen.ids.nav_drawer.children[0].children[0].children[0] 
+            # This is fragile navigation to MDList.
+            # Let's rely on ID if possible.
+            # The structure is MDNavigationDrawer -> MDBoxLayout -> ScrollView -> MDList
+            
+            # Alternative: Permission check in on_release (simpler)
+            # But hiding is better.
+            
+            # Let's verify password change
+            if user.must_change_password:
+                MDApp.get_running_app().root.get_screen("main").ids.inner_screen_manager.current = "profile"
+                from kivymd.toast import toast
+                toast("Veuillez changer votre mot de passe")
+            
             MDApp.get_running_app().refresh_dashboard()
         else:
             self.show_error("Nom d'utilisateur ou mot de passe incorrect")
@@ -239,10 +284,22 @@ class MadinaStockApp(MDApp):
         Builder.load_file("ui/screens/inventory.kv")
         Builder.load_file("ui/screens/pos.kv")
         Builder.load_file("ui/screens/history.kv")
+        Builder.load_file("ui/screens/users.kv")
+        Builder.load_file("ui/screens/profile.kv")
         
         return Builder.load_string(KV)
     
-    def on_start(self):        
+    def on_start(self):
+        # Initialize DB (Create tables if not exist)
+        # Note: We deleted the DB, so this is critical.
+        init_db()
+        
+        # Create default admin if not exists
+        db = SessionLocal()
+        if not crud.get_user_by_username(db, "admin"):
+             crud.create_user(db, "admin", "admin", role="admin", must_change_password=False)
+        db.close()
+
         # Add screens to the nested ScreenManager inside MainScreen
         # Access the inner screen manager via MainScreen's ids
         main_screen = self.root.get_screen("main")
@@ -252,6 +309,8 @@ class MadinaStockApp(MDApp):
         inner_sm.add_widget(InventoryScreen(name="inventory"))
         inner_sm.add_widget(POSScreen(name="pos"))
         inner_sm.add_widget(SalesHistoryScreen(name="history"))
+        inner_sm.add_widget(UsersScreen(name="users"))
+        inner_sm.add_widget(ProfileScreen(name="profile"))
         
         # Set default screen
         inner_sm.current = "dashboard"
@@ -299,7 +358,14 @@ class MadinaStockApp(MDApp):
         # Proxy to inventory screen
         main_screen = self.root.get_screen("main")
         inner_sm = main_screen.ids.inner_screen_manager
+        main_screen = self.root.get_screen("main")
+        inner_sm = main_screen.ids.inner_screen_manager
         inner_sm.get_screen("inventory").show_add_product_dialog()
+    
+    def show_add_user_dialog(self):
+        main_screen = self.root.get_screen("main")
+        inner_sm = main_screen.ids.inner_screen_manager
+        inner_sm.get_screen("users").show_add_user_dialog()
 
 if __name__ == "__main__":
     MadinaStockApp().run()

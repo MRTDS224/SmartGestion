@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Enum, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -15,6 +15,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     role = Column(String, default=UserRole.EMPLOYEE.value)
+    must_change_password = Column(Boolean, default=True)
     # role should store the value of the enum, e.g., 'admin' or 'employee'
 
 class Category(Base):

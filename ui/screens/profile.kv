@@ -1,0 +1,49 @@
+<ProfileScreen>:
+    name: "profile"
+    MDBoxLayout:
+        orientation: 'vertical'
+        
+        MDTopAppBar:
+            title: "Mon Profil"
+            left_action_items: [["menu", lambda x: app.root.get_screen("main").ids.nav_drawer.set_state("open")]]
+            
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: dp(20)
+            spacing: dp(20)
+            
+            MDLabel:
+                id: profile_info
+                text: "Utilisateur: --"
+                halign: "center"
+                font_style: "H6"
+            
+            MDCard:
+                orientation: 'vertical'
+                padding: dp(20)
+                spacing: dp(15)
+                size_hint_y: None
+                height: dp(300)
+                pos_hint: {"center_x": .5}
+                
+                MDLabel:
+                    text: "Changer le mot de passe"
+                    halign: "center"
+                    theme_text_color: "Primary"
+                
+                MDTextField:
+                    id: new_password
+                    hint_text: "Nouveau mot de passe"
+                    password: True
+                    
+                MDTextField:
+                    id: confirm_password
+                    hint_text: "Confirmer le mot de passe"
+                    password: True
+                    
+                MDFillRoundFlatButton:
+                    text: "ENREGISTRER"
+                    pos_hint: {"center_x": .5}
+                    on_release: root.change_password()
+            
+            Widget:

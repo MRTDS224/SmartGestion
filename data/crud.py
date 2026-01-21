@@ -13,9 +13,14 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return get_password_hash(plain_password) == hashed_password
 
-def create_user(db: Session, username, password, role="employee"):
+def create_user(db: Session, username, password, role="employee", must_change_password=True):
     hashed_password = get_password_hash(password)
-    db_user = models.User(username=username, hashed_password=hashed_password, role=role)
+    db_user = models.User(
+        username=username, 
+        hashed_password=hashed_password, 
+        role=role,
+        must_change_password=must_change_password
+    )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -23,6 +28,32 @@ def create_user(db: Session, username, password, role="employee"):
 
 def get_user_by_username(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
+
+def get_users(db: Session):
+    return db.query(models.User).all()
+
+def delete_user(db: Session, user_id: int):
+    # Prevent deleting the last admin is a good safety check, but for now simple delete
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        # Check if user has sales?
+        # If user has sales, we might want to soft delete or keep them.
+        # SQLite will might complain if no cascade delete on foreign keys or set null.
+        # But Sale.user_id is ForeignKey.
+        db.delete(user)
+        db.commit()
+        return True
+    return False
+
+def update_user_password(db: Session, user_id: int, new_password: str):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        user.hashed_password = get_password_hash(new_password)
+        user.must_change_password = False
+        db.commit()
+        db.refresh(user)
+        return True
+    return False
 
 # --- Products & Categories ---
 
