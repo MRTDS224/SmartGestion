@@ -67,7 +67,7 @@ def get_products(db: Session, search_query: str = None):
     return query.all()
 
 def get_product(db: Session, product_id: int):
-    return db.query(models.Product).filter(models.Product.id == product_id).first()
+    return db.query(models.Product).options(joinedload(models.Product.category)).filter(models.Product.id == product_id).first()
 
 # --- Sales ---
 
@@ -115,4 +115,4 @@ def process_sale(db: Session, user_id: int, items: list):
     return new_sale
 
 def get_sales_history(db: Session):
-    return db.query(models.Sale).order_by(models.Sale.timestamp.desc()).all()
+    return db.query(models.Sale).options(joinedload(models.Sale.user)).order_by(models.Sale.timestamp.desc()).all()

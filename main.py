@@ -21,6 +21,7 @@ from data import crud
 # Import Screens
 from ui.screens.inventory import InventoryScreen
 from ui.screens.pos import POSScreen
+from ui.screens.history import SalesHistoryScreen
 
 # Global user session
 class UserSession:
@@ -181,6 +182,14 @@ KV = '''
                                 icon: "point-of-sale"
 
                         OneLineIconListItem:
+                            text: "Historique Ventes"
+                            on_release: 
+                                inner_screen_manager.current = "history"
+                                nav_drawer.set_state("close")
+                            IconLeftWidget:
+                                icon: "history"
+
+                        OneLineIconListItem:
                             text: "Déconnexion"
                             on_release: 
                                 app.logout()
@@ -229,6 +238,7 @@ class MadinaStockApp(MDApp):
         # Load external KVs
         Builder.load_file("ui/screens/inventory.kv")
         Builder.load_file("ui/screens/pos.kv")
+        Builder.load_file("ui/screens/history.kv")
         
         return Builder.load_string(KV)
     
@@ -241,6 +251,7 @@ class MadinaStockApp(MDApp):
         inner_sm.add_widget(DashboardScreen(name="dashboard"))
         inner_sm.add_widget(InventoryScreen(name="inventory"))
         inner_sm.add_widget(POSScreen(name="pos"))
+        inner_sm.add_widget(SalesHistoryScreen(name="history"))
         
         # Set default screen
         inner_sm.current = "dashboard"

@@ -1,180 +1,112 @@
 from kivymd.uix.screen import MDScreen
-from kivymd.uix.datatables import MDDataTable
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.button import MDFlatButton, MDFillRoundFlatButton
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.textfield import MDTextField
-from kivy.metrics import dp
+from kivymd.uix.list import TwoLineAvatarIconListItem
+from kivy.properties import StringProperty, NumericProperty, ObjectProperty
 from data import crud, database
+from kivymd.toast import toast
+
+class InventoryListItem(TwoLineAvatarIconListItem):
+    product_id = NumericProperty()
+    screen = ObjectProperty()
+    # text and secondary_text are inherited
 
 class InventoryScreen(MDScreen):
-    dialog = None
-    data_table = None
     selected_product_id = None
-    dialog_mode = "add"
 
     def on_enter(self):
-        self.load_table()
+        self.load_products()
 
-    def load_table(self):
-        layout = self.ids.inventory_box
-        layout.clear_widgets()
-        
-        main_box = MDBoxLayout(orientation="vertical", spacing=dp(10))
-        
-        # Actions Row
-        action_box = MDBoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10), padding=dp(10))
-        
-        edit_btn = MDFillRoundFlatButton(text="MODIFIER", on_release=self.edit_selected)
-        delete_btn = MDFillRoundFlatButton(text="SUPPRIMER", on_release=self.delete_selected, md_bg_color=(1, 0, 0, 1))
-        
-        action_box.add_widget(edit_btn)
-        action_box.add_widget(delete_btn)
-        
-        main_box.add_widget(action_box)
-
+    def load_products(self, search_text=""):
         db = database.SessionLocal()
-        products = crud.get_products(db)
+        products = crud.get_products(db, search_text)
         db.close()
-
-        table_data = []
+        
+        data = []
         for p in products:
-            table_data.append((
-                str(p.id),
-                p.name,
-                f"{p.stock_quantity}",
-                f"{p.selling_price} GNF",
-                p.category.name if p.category else "N/A"
-            ))
-
-        self.data_table = MDDataTable(
-            pos_hint={'center_x': 0.5, 'center_y': 0.5},
-            size_hint=(1, 1),
-            use_pagination=True,
-            check=True,
-            column_data=[
-                ("ID", dp(10)),
-                ("Nom", dp(30)),
-                ("Stock", dp(15)),
-                ("Prix", dp(20)),
-                ("Catégorie", dp(20)),
-            ],
-            row_data=table_data,
-        )
-        self.data_table.bind(on_check_press=self.on_check_press)
-        main_box.add_widget(self.data_table)
+            data.append({
+                "text": p.name,
+                "secondary_text": f"Stock: {p.stock_quantity} | Prix: {p.selling_price} GNF",
+                "product_id": p.id,
+                "screen": self
+            })
         
-        layout.add_widget(main_box)
+        self.ids.rv.data = data
 
-    def on_check_press(self, instance_table, current_row):
-        if current_row:
-             self.selected_product_id = int(current_row[0])
-        else:
-             self.selected_product_id = None
-
-    def edit_selected(self, instance):
-        if not self.selected_product_id:
-            return
+    def on_select_product(self, product_id):
+        self.selected_product_id = product_id
         
         db = database.SessionLocal()
-        p = crud.get_product(db, self.selected_product_id)
+        p = crud.get_product(db, product_id)
         db.close()
         
-        if not p:
-            return
+        if p:
+            self.ids.form_title.text = f"Modifier: {p.name}"
+            self.ids.form_name.text = p.name
+            self.ids.form_price.text = str(p.selling_price)
+            self.ids.form_stock.text = str(p.stock_quantity)
+            self.ids.form_category.text = p.category.name if p.category else "N/A"
+            self.ids.form_category.disabled = False # In full app, this would be a dropdown
 
-        self.show_add_product_dialog()
-        content = self.dialog.content_cls
-        content.ids.name.text = p.name
-        content.ids.price.text = str(p.selling_price)
-        content.ids.stock.text = str(p.stock_quantity)
-        
-        self.dialog_mode = "edit"
-        self.dialog.title = "Modifier Produit"
-        self.dialog.buttons[1].text = "SAUVEGARDER"
-
-    def delete_selected(self, instance):
-        if not self.selected_product_id:
-            return
-            
-        db = database.SessionLocal()
-        crud.delete_product(db, self.selected_product_id)
-        db.close()
+    def clear_form(self):
         self.selected_product_id = None
-        self.load_table()
+        self.ids.form_title.text = "Nouveau Produit"
+        self.ids.form_name.text = ""
+        self.ids.form_price.text = ""
+        self.ids.form_stock.text = ""
+        self.ids.form_category.text = ""
+        # self.ids.form_category.disabled = True # Maybe enable if we support adding categories
 
-    def show_add_product_dialog(self):
-        self.dialog_mode = "add"
-        
-        if not self.dialog:
-            self.dialog = MDDialog(
-                title="Ajouter un Produit",
-                type="custom",
-                content_cls=AddProductContent(),
-                buttons=[
-                    MDFlatButton(
-                        text="ANNULER",
-                        on_release=self.close_dialog
-                    ),
-                    MDFillRoundFlatButton(
-                        text="AJOUTER",
-                        on_release=self.save_product
-                    ),
-                ],
-            )
-        else:
-            self.dialog.title = "Ajouter un Produit"
-            self.dialog.buttons[1].text = "AJOUTER"
-            self.dialog.content_cls.ids.name.text = ""
-            self.dialog.content_cls.ids.price.text = ""
-            self.dialog.content_cls.ids.stock.text = ""
-            
-        self.dialog.open()
-
-    def close_dialog(self, *args):
-        try:
-             self.dialog.dismiss()
-        except:
-             pass
-
-    def save_product(self, *args):
-        content = self.dialog.content_cls
-        name = content.ids.name.text
-        price = content.ids.price.text
-        stock = content.ids.stock.text
+    def save_product(self):
+        name = self.ids.form_name.text
+        price = self.ids.form_price.text
+        stock = self.ids.form_stock.text
         
         if not name or not price or not stock:
+            toast("Veuillez remplir tous les champs")
             return
 
-        db = database.SessionLocal()
-        
         try:
-            if self.dialog_mode == "add":
+            db = database.SessionLocal()
+            
+            if self.selected_product_id:
+                # UPDATE
+                crud.update_product(db, self.selected_product_id, {
+                    "name": name,
+                    "selling_price": float(price),
+                    "stock_quantity": int(stock)
+                })
+                toast("Produit modifié")
+            else:
+                # CREATE
+                # Ensure category exists or use default
                 categories = crud.get_categories(db)
                 if not categories:
                      crud.create_category(db, "General")
                      categories = crud.get_categories(db)
                 cat_id = categories[0].id if categories else None 
-
+                
                 crud.create_product(db, {
                     "name": name,
                     "selling_price": float(price),
                     "stock_quantity": int(stock),
                     "category_id": cat_id
                 })
-            elif self.dialog_mode == "edit":
-                 crud.update_product(db, self.selected_product_id, {
-                    "name": name,
-                    "selling_price": float(price),
-                    "stock_quantity": int(stock)
-                 })
-        except Exception as e:
-            print(f"Error saving product: {e}")
-        finally:
-            db.close()
+                toast("Produit créé")
             
-        self.close_dialog()
-        self.load_table()
+            db.close()
+            self.clear_form()
+            self.load_products(self.ids.search_field.text) # Refresh list
+            
+        except Exception as e:
+            toast(f"Erreur: {str(e)}")
 
-class AddProductContent(MDBoxLayout):
-    pass
+    def delete_product(self):
+        if not self.selected_product_id:
+            return
+
+        db = database.SessionLocal()
+        crud.delete_product(db, self.selected_product_id)
+        db.close()
+        
+        toast("Produit supprimé")
+        self.clear_form()
+        self.load_products(self.ids.search_field.text)
