@@ -1,0 +1,60 @@
+<POSScreen>:
+    name: "pos"
+    MDBoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Point de Vente"
+            left_action_items: [["menu", lambda x: app.root.get_screen("main").ids.nav_drawer.set_state("open")]]
+        
+        MDBoxLayout:
+            orientation: 'horizontal'
+            
+            # Left: Product List
+            MDBoxLayout:
+                orientation: 'vertical'
+                size_hint_x: 0.6
+                padding: 10
+                spacing: 10
+                
+                MDTextField:
+                    hint_text: "Rechercher un produit..."
+                    icon_right: "magnify"
+                    on_text_validate: root.load_products(self.text)
+                
+                ScrollView:
+                    MDList:
+                        id: product_list
+
+            # Right: Cart
+            MDCard:
+                orientation: 'vertical'
+                size_hint_x: 0.4
+                padding: 10
+                elevation: 4
+                
+                MDLabel:
+                    text: "Panier"
+                    font_style: "H6"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                
+                ScrollView:
+                    MDBoxLayout:
+                        id: cart_box
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        spacing: 5
+
+                MDLabel:
+                    id: total_label
+                    text: "Total: 0 GNF"
+                    font_style: "H5"
+                    halign: "right"
+                    size_hint_y: None
+                    height: "50dp"
+
+                MDFillRoundFlatButton:
+                    text: "VALIDER VENTE"
+                    size_hint_x: 1
+                    on_release: root.validate_sale()

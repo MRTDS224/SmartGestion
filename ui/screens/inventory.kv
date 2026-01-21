@@ -1,0 +1,33 @@
+<InventoryScreen>:
+    name: "inventory"
+    MDBoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Inventaire"
+            left_action_items: [["menu", lambda x: app.root.get_screen("main").ids.nav_drawer.set_state("open")]]
+            right_action_items: [["plus", lambda x: root.show_add_product_dialog()]]
+        
+        MDBoxLayout:
+            id: inventory_box
+            orientation: 'vertical'
+            padding: 10
+
+<AddProductContent>:
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "200dp"
+
+    MDTextField:
+        id: name
+        hint_text: "Nom du produit"
+
+    MDTextField:
+        id: price
+        hint_text: "Prix de vente"
+        input_filter: "float"
+
+    MDTextField:
+        id: stock
+        hint_text: "Quantité Initiale"
+        input_filter: "int"
