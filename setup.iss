@@ -2,14 +2,14 @@
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{12345678-1234-1234-1234-123456789012}
-AppName=Madina Stock
+AppName=SmartGestion
 AppVersion=1.0
 AppPublisher=Antigravity
-DefaultDirName={autopf}\MadinaStock
+DefaultDirName={autopf}\SmartGestion
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputBaseFilename=MadinaStockSetup
+OutputBaseFilename=SmartGestionSetup
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -21,13 +21,13 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "dist\MadinaStock\MadinaStock.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\MadinaStock\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\SmartGestion\SmartGestion.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\SmartGestion\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\Madina Stock"; Filename: "{app}\MadinaStock.exe"
-Name: "{autodesktop}\Madina Stock"; Filename: "{app}\MadinaStock.exe"; Tasks: desktopicon
+Name: "{autoprograms}\SmartGestion"; Filename: "{app}\SmartGestion.exe"
+Name: "{autodesktop}\SmartGestion"; Filename: "{app}\SmartGestion.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\MadinaStock.exe"; Description: "{cm:LaunchProgram,Madina Stock}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\SmartGestion.exe"; Description: "{cm:LaunchProgram,SmartGestion}"; Flags: nowait postinstall skipifsilent

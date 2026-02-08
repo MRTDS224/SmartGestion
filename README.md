@@ -1,4 +1,4 @@
-# Madina Stock
+# SmartGestion
 
 Application de gestion de stock et de point de vente (POS) développée avec KivyMD.
 

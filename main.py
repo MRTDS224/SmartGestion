@@ -1,3 +1,16 @@
+import sys
+import os
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 from kivymd.app import MDApp
 from kivymd.uix.screenmanager import MDScreenManager
 from kivymd.uix.screen import MDScreen
@@ -13,7 +26,6 @@ from kivy.metrics import dp
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.lang import Builder
 from kivy.core.window import Window
-import os
 
 from data.database import SessionLocal, init_db
 from data import crud
@@ -45,7 +57,7 @@ KV = '''
 
         MDLabel:
             id: welcome_label
-            text: "Madina Stock"
+            text: "SmartGestion"
             font_size: "40sp"
             halign: 'center'
             size_hint_y: None
@@ -99,7 +111,7 @@ KV = '''
             spacing: "20dp"
             
             MDLabel:
-                text: "Bienvenue sur Madina Stock"
+                text: "Bienvenue sur SmartGestion"
                 halign: "center"
                 font_style: "H4"
 
@@ -153,7 +165,7 @@ KV = '''
                 spacing: "8dp"
                 
                 MDLabel:
-                    text: "Madina Stock"
+                    text: "SmartGestion"
                     font_style: "Button"
                     size_hint_y: None
                     height: self.texture_size[1]
@@ -321,20 +333,21 @@ class DashboardScreen(MDScreen):
 class MainScreen(MDScreen):
     pass
 
-class MadinaStockApp(MDApp):
+class SmartGestionApp(MDApp):
     user_session = session
 
     def build(self):
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Light"
         Window.size = (360, 640) # Mobile-like size for testing
+        self.title = "SmartGestion"
         
         # Load external KVs
-        Builder.load_file("ui/screens/inventory.kv")
-        Builder.load_file("ui/screens/pos.kv")
-        Builder.load_file("ui/screens/history.kv")
-        Builder.load_file("ui/screens/users.kv")
-        Builder.load_file("ui/screens/profile.kv")
+        Builder.load_file(resource_path("ui/screens/inventory.kv"))
+        Builder.load_file(resource_path("ui/screens/pos.kv"))
+        Builder.load_file(resource_path("ui/screens/history.kv"))
+        Builder.load_file(resource_path("ui/screens/users.kv"))
+        Builder.load_file(resource_path("ui/screens/profile.kv"))
         
         return Builder.load_string(KV)
     
@@ -407,8 +420,6 @@ class MadinaStockApp(MDApp):
         # Proxy to inventory screen
         main_screen = self.root.get_screen("main")
         inner_sm = main_screen.ids.inner_screen_manager
-        main_screen = self.root.get_screen("main")
-        inner_sm = main_screen.ids.inner_screen_manager
         inner_sm.get_screen("inventory").show_add_product_dialog()
     
     def show_add_user_dialog(self):
@@ -417,4 +428,4 @@ class MadinaStockApp(MDApp):
         inner_sm.get_screen("users").show_add_user_dialog()
 
 if __name__ == "__main__":
-    MadinaStockApp().run()
+    SmartGestionApp().run()
