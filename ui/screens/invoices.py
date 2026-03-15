@@ -7,6 +7,10 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import NumericProperty, StringProperty
 from kivymd.toast import toast
+from kivymd.uix.textfield import MDTextField
+from kivymd.uix.label import MDLabel
+from kivymd.uix.button import MDFillRoundFlatButton, MDIconButton
+from kivy.lang import Builder
 from data import crud, database
 import os
 
@@ -24,11 +28,53 @@ class InvoicesScreen(MDScreen):
 
     def on_enter(self):
         self.load_invoices()
-        self.clear_form()
+        self.set_mode("manual") # This will trigger clear_form inside the mode setup
 
     def set_mode(self, mode):
         self.creation_mode = mode
-        self.update_total()
+        self.build_dynamic_ui()
+        self.clear_form() # Reset selections when switching mode
+
+    def build_dynamic_ui(self):
+        container = self.ids.dynamic_container
+        container.clear_widgets()
+        
+        if self.creation_mode == "manual":
+            # Build Manual UI
+            input_row = MDBoxLayout(orientation='horizontal', adaptive_height=True, spacing="5dp")
+            
+            self.item_desc = MDTextField(hint_text="Description", size_hint_x=0.5)
+            self.item_qty = MDTextField(hint_text="Qté", input_filter="int", text="1", size_hint_x=0.2)
+            self.item_price = MDTextField(hint_text="Prix Unitaire", input_filter="float", size_hint_x=0.2)
+            btn_add = MDIconButton(icon="plus-circle", on_release=lambda x: self.add_manual_item(), size_hint_x=0.1)
+            
+            input_row.add_widget(self.item_desc)
+            input_row.add_widget(self.item_qty)
+            input_row.add_widget(self.item_price)
+            input_row.add_widget(btn_add)
+            
+            list_box = MDBoxLayout(orientation='vertical')
+            lbl = MDLabel(text="Articles ajoutés:", size_hint_y=None, height="30dp")
+            scroll = ScrollView()
+            self.manual_items_list = MDList()
+            scroll.add_widget(self.manual_items_list)
+            
+            list_box.add_widget(lbl)
+            list_box.add_widget(scroll)
+            
+            container.add_widget(input_row)
+            container.add_widget(list_box)
+
+        elif self.creation_mode == "sale":
+            # Build Sale UI
+            sale_row = MDBoxLayout(orientation='horizontal', adaptive_height=True, spacing="10dp")
+            self.lbl_selected_sale = MDLabel(text="Vente: Aucune")
+            btn_sale = MDFillRoundFlatButton(text="Sélectionner Vente", on_release=lambda x: self.show_sale_dialog())
+            
+            sale_row.add_widget(self.lbl_selected_sale)
+            sale_row.add_widget(btn_sale)
+            
+            container.add_widget(sale_row)
 
     def load_invoices(self):
         db = database.SessionLocal()
@@ -49,20 +95,23 @@ class InvoicesScreen(MDScreen):
         self.selected_client_id = None
         self.selected_sale_id = None
         self.manual_items = []
-        self.creation_mode = "manual"
         
         self.ids.lbl_selected_client.text = "Client: Aucun"
-        self.ids.lbl_selected_sale.text = "Vente: Aucune"
-        self.ids.item_desc.text = ""
-        self.ids.item_qty.text = "1"
-        self.ids.item_price.text = ""
-        self.ids.manual_items_list.clear_widgets()
+        
+        if self.creation_mode == "manual":
+            self.item_desc.text = ""
+            self.item_qty.text = "1"
+            self.item_price.text = ""
+            self.manual_items_list.clear_widgets()
+        elif self.creation_mode == "sale":
+            self.lbl_selected_sale.text = "Vente: Aucune"
+            
         self.update_total()
 
     def add_manual_item(self):
-        desc = self.ids.item_desc.text
-        qty_str = self.ids.item_qty.text
-        price_str = self.ids.item_price.text
+        desc = self.item_desc.text
+        qty_str = self.item_qty.text
+        price_str = self.item_price.text
         
         if not desc or not qty_str or not price_str:
             toast("Veuillez remplir tous les champs")
@@ -82,11 +131,11 @@ class InvoicesScreen(MDScreen):
         })
         
         item_ui = OneLineListItem(text=f"{desc} (x{qty}) - {price} GNF")
-        self.ids.manual_items_list.add_widget(item_ui)
+        self.manual_items_list.add_widget(item_ui)
         
-        self.ids.item_desc.text = ""
-        self.ids.item_qty.text = "1"
-        self.ids.item_price.text = ""
+        self.item_desc.text = ""
+        self.item_qty.text = "1"
+        self.item_price.text = ""
         self.update_total()
 
     def update_total(self):
@@ -163,7 +212,8 @@ class InvoicesScreen(MDScreen):
 
     def pick_sale(self, sale_id, amount):
         self.selected_sale_id = sale_id
-        self.ids.lbl_selected_sale.text = f"Vente: #{sale_id} ({amount} GNF)"
+        if self.creation_mode == "sale":
+            self.lbl_selected_sale.text = f"Vente: #{sale_id} ({amount} GNF)"
         self.update_total()
         if self.sale_dialog:
             self.sale_dialog.dismiss()

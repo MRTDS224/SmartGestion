@@ -3,3 +3,4 @@ kivymd
 sqlalchemy
 psycopg2-binary
 pillow
+reportlab
