@@ -195,3 +195,73 @@ def get_sales_history(db: Session):
         joinedload(models.Sale.user),
         joinedload(models.Sale.items).joinedload(models.SaleItem.product)
     ).order_by(models.Sale.timestamp.desc()).all()
+
+# --- Clients ---
+
+def create_client(db: Session, client_data: dict):
+    db_client = models.Client(**client_data)
+    db.add(db_client)
+    db.commit()
+    db.refresh(db_client)
+    return db_client
+
+def get_clients(db: Session, search_query: str = None):
+    query = db.query(models.Client)
+    if search_query:
+        query = query.filter(models.Client.name.ilike(f"%{search_query}%"))
+    return query.all()
+
+def update_client(db: Session, client_id: int, client_data: dict):
+    db_client = db.query(models.Client).filter(models.Client.id == client_id).first()
+    if db_client:
+        for key, value in client_data.items():
+            setattr(db_client, key, value)
+        db.commit()
+        db.refresh(db_client)
+    return db_client
+
+def delete_client(db: Session, client_id: int):
+    db_client = db.query(models.Client).filter(models.Client.id == client_id).first()
+    if db_client:
+        # Before deleting, consider checking if client has invoices
+        db.delete(db_client)
+        db.commit()
+        return True
+    return False
+
+# --- Invoices ---
+
+def create_invoice(db: Session, client_id: int, items: list, sale_id: int = None):
+    """
+    items: list of dicts {'description': str, 'quantity': int, 'unit_price': float}
+    """
+    total_amount = 0.0
+    invoice_items_objects = []
+
+    for item in items:
+        total_price = item['unit_price'] * item['quantity']
+        total_amount += total_price
+        invoice_items_objects.append(models.InvoiceItem(
+            description=item['description'],
+            quantity=item['quantity'],
+            unit_price=item['unit_price'],
+            total_price=total_price
+        ))
+
+    new_invoice = models.Invoice(client_id=client_id, sale_id=sale_id, total_amount=total_amount)
+    db.add(new_invoice)
+    db.commit()
+    db.refresh(new_invoice)
+
+    for inv_item in invoice_items_objects:
+        inv_item.invoice_id = new_invoice.id
+        db.add(inv_item)
+
+    db.commit()
+    return new_invoice
+
+def get_invoices(db: Session):
+    return db.query(models.Invoice).options(
+        joinedload(models.Invoice.client),
+        joinedload(models.Invoice.items)
+    ).order_by(models.Invoice.timestamp.desc()).all()

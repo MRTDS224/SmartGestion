@@ -1,0 +1,182 @@
+<InvoicesScreen>:
+    name: "invoices"
+    MDBoxLayout:
+        orientation: 'vertical'
+        
+        MDTopAppBar:
+            title: "Factures"
+            left_action_items: [["menu", lambda x: app.root.get_screen("main").ids.nav_drawer.set_state("open")]]
+            right_action_items: [["plus", lambda x: root.clear_form()]]
+            
+        MDBoxLayout:
+            padding: dp(10)
+            spacing: dp(10)
+
+            # Left Panel: List of Invoices
+            MDCard:
+                size_hint_x: 0.3
+                orientation: 'vertical'
+                padding: "8dp"
+                elevation: 2
+                
+                MDLabel:
+                    text: "Historique"
+                    font_style: "H6"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                    padding_y: "10dp"
+                    
+                RecycleView:
+                    id: invoices_rv
+                    viewclass: 'InvoiceListItem'
+                    RecycleBoxLayout:
+                        default_size: None, dp(72)
+                        default_size_hint: 1, None
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: 'vertical'
+
+            # Right Panel: Create
+            MDCard:
+                id: detail_panel
+                size_hint_x: 0.7
+                orientation: 'vertical'
+                padding: "20dp"
+                spacing: "10dp"
+                elevation: 2
+                
+                MDLabel:
+                    text: "Créer Facture"
+                    font_style: "H5"
+                    halign: "center"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    adaptive_height: True
+                    spacing: "10dp"
+                    
+                    MDLabel:
+                        id: lbl_selected_client
+                        text: "Client: Aucun"
+                        theme_text_color: "Primary"
+                    
+                    MDFillRoundFlatButton:
+                        text: "Sélectionner Client"
+                        on_release: root.show_client_dialog()
+
+                MDSeparator:
+
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    adaptive_height: True
+                    spacing: "10dp"
+                    
+                    MDFlatButton:
+                        text: "Mode Manuel"
+                        on_release: root.set_mode("manual")
+                        theme_text_color: "Custom"
+                        text_color: app.theme_cls.primary_color if root.creation_mode == "manual" else app.theme_cls.disabled_hint_text_color
+                    
+                    MDFlatButton:
+                        text: "Depuis Vente"
+                        on_release: root.set_mode("sale")
+                        theme_text_color: "Custom"
+                        text_color: app.theme_cls.primary_color if root.creation_mode == "sale" else app.theme_cls.disabled_hint_text_color
+
+                # Container changes based on mode
+                MDBoxLayout:
+                    id: manual_container
+                    orientation: 'vertical'
+                    spacing: "5dp"
+                    opacity: 1 if root.creation_mode == "manual" else 0
+                    disabled: root.creation_mode != "manual"
+                    size_hint_y: 1 if root.creation_mode == "manual" else None
+                    height: self.minimum_height if root.creation_mode == "manual" else 0
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5} if root.creation_mode == "manual" else {'top': 2.0}
+
+                    MDBoxLayout:
+                        orientation: 'horizontal'
+                        adaptive_height: True
+                        spacing: "5dp"
+                        
+                        MDTextField:
+                            id: item_desc
+                            hint_text: "Description"
+                            size_hint_x: 0.5
+                        MDTextField:
+                            id: item_qty
+                            hint_text: "Qté"
+                            input_filter: "int"
+                            text: "1"
+                            size_hint_x: 0.2
+                        MDTextField:
+                            id: item_price
+                            hint_text: "Prix Unitaire"
+                            input_filter: "float"
+                            size_hint_x: 0.2
+                        MDIconButton:
+                            icon: "plus-circle"
+                            on_release: root.add_manual_item()
+                            size_hint_x: 0.1
+                    
+                    MDBoxLayout:
+                        orientation: 'vertical'
+                        MDLabel:
+                            text: "Articles ajoutés:"
+                            size_hint_y: None
+                            height: "30dp"
+                        ScrollView:
+                            MDList:
+                                id: manual_items_list
+
+                # Sale Mode Container
+                MDBoxLayout:
+                    id: sale_container
+                    orientation: 'vertical'
+                    spacing: "10dp"
+                    opacity: 1 if root.creation_mode == "sale" else 0
+                    disabled: root.creation_mode != "sale"
+                    size_hint_y: 1 if root.creation_mode == "sale" else None
+                    height: self.minimum_height if root.creation_mode == "sale" else 0
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5} if root.creation_mode == "sale" else {'top': 2.0}
+
+                    MDBoxLayout:
+                        orientation: 'horizontal'
+                        adaptive_height: True
+                        spacing: "10dp"
+                        
+                        MDLabel:
+                            id: lbl_selected_sale
+                            text: "Vente: Aucune"
+                        
+                        MDFillRoundFlatButton:
+                            text: "Sélectionner Vente"
+                            on_release: root.show_sale_dialog()
+                
+                MDSeparator:
+
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    adaptive_height: True
+                    spacing: "10dp"
+                    padding: [0, 10, 0, 0]
+                    
+                    MDLabel:
+                        id: lbl_total
+                        text: "Total: 0.0 GNF"
+                        font_style: "H6"
+                        halign: "right"
+                        
+                    MDFillRoundFlatButton:
+                        id: btn_generate
+                        text: "GÉNÉRER FACTURE"
+                        on_release: root.generate_invoice()
+
+<InvoiceListItem>:
+    text: ""
+    secondary_text: ""
+    on_release: app.root.get_screen("main").ids.inner_screen_manager.get_screen("invoices").select_invoice(root.invoice_id)
+    IconLeftWidget:
+        icon: "file-document-outline"

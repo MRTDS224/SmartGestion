@@ -64,3 +64,39 @@ class SaleItem(Base):
 
     sale = relationship("Sale", back_populates="items")
     product = relationship("Product", back_populates="sale_items")
+
+class Client(Base):
+    __tablename__ = "clients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    phone = Column(String)
+    address = Column(String)
+    email = Column(String)
+    
+    invoices = relationship("Invoice", back_populates="client")
+
+class Invoice(Base):
+    __tablename__ = "invoices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id"))
+    sale_id = Column(Integer, ForeignKey("sales.id"), nullable=True) # Optional link
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    total_amount = Column(Float, default=0.0)
+
+    client = relationship("Client", back_populates="invoices")
+    sale = relationship("Sale")
+    items = relationship("InvoiceItem", back_populates="invoice")
+
+class InvoiceItem(Base):
+    __tablename__ = "invoice_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"))
+    description = Column(String)
+    quantity = Column(Integer, default=1)
+    unit_price = Column(Float)
+    total_price = Column(Float)
+
+    invoice = relationship("Invoice", back_populates="items")

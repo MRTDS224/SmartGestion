@@ -36,6 +36,8 @@ from ui.screens.pos import POSScreen
 from ui.screens.history import SalesHistoryScreen
 from ui.screens.users import UsersScreen
 from ui.screens.profile import ProfileScreen
+from ui.screens.clients import ClientsScreen
+from ui.screens.invoices import InvoicesScreen
 
 # Global user session
 class UserSession:
@@ -229,6 +231,22 @@ KV = '''
                                 icon: "history"
 
                         OneLineIconListItem:
+                            text: "Clients"
+                            on_release: 
+                                inner_screen_manager.current = "clients"
+                                nav_drawer.set_state("close")
+                            IconLeftWidget:
+                                icon: "account-multiple"
+
+                        OneLineIconListItem:
+                            text: "Factures"
+                            on_release: 
+                                inner_screen_manager.current = "invoices"
+                                nav_drawer.set_state("close")
+                            IconLeftWidget:
+                                icon: "file-document"
+
+                        OneLineIconListItem:
                             text: "Déconnexion"
                             on_release: 
                                 app.logout()
@@ -348,6 +366,8 @@ class SmartGestionApp(MDApp):
         Builder.load_file(resource_path("ui/screens/history.kv"))
         Builder.load_file(resource_path("ui/screens/users.kv"))
         Builder.load_file(resource_path("ui/screens/profile.kv"))
+        Builder.load_file(resource_path("ui/screens/clients.kv"))
+        Builder.load_file(resource_path("ui/screens/invoices.kv"))
         
         return Builder.load_string(KV)
     
@@ -373,6 +393,8 @@ class SmartGestionApp(MDApp):
         inner_sm.add_widget(SalesHistoryScreen(name="history"))
         inner_sm.add_widget(UsersScreen(name="users"))
         inner_sm.add_widget(ProfileScreen(name="profile"))
+        inner_sm.add_widget(ClientsScreen(name="clients"))
+        inner_sm.add_widget(InvoicesScreen(name="invoices"))
         
         # Set default screen
         inner_sm.current = "dashboard"
