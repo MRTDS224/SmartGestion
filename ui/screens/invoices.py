@@ -270,4 +270,31 @@ class InvoicesScreen(MDScreen):
         self.load_invoices()
 
     def select_invoice(self, invoice_id):
-        toast(f"Facture #{invoice_id} sélectionnée (Affichage détails à venir)")
+        app_dir = os.path.expanduser("~/.smartgestion")
+        invoices_dir = os.path.join(app_dir, "Factures")
+        
+        if not os.path.exists(invoices_dir):
+            toast("Aucune facture trouvée")
+            return
+            
+        target_file = None
+        for filename in os.listdir(invoices_dir):
+            if filename.startswith(f"Facture_{invoice_id}_"):
+                target_file = os.path.join(invoices_dir, filename)
+                break
+                
+        if target_file and os.path.exists(target_file):
+            try:
+                os.startfile(target_file)
+                toast(f"Ouverture de la facture #{invoice_id}")
+            except AttributeError:
+                import subprocess
+                import platform
+                if platform.system() == 'Darwin':
+                    subprocess.call(('open', target_file))
+                else:
+                    subprocess.call(('xdg-open', target_file))
+            except Exception as e:
+                toast(f"Erreur d'ouverture: {e}")
+        else:
+            toast("Fichier PDF introuvable")

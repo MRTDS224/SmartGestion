@@ -17,7 +17,8 @@ def create_invoice_pdf(invoice, app_dir):
     invoices_dir = os.path.join(app_dir, "Factures")
     os.makedirs(invoices_dir, exist_ok=True)
     
-    filename = f"Facture_{invoice.id}_{invoice.client.name.replace(' ', '_')}.pdf"
+    client_name = invoice.client.name if invoice.client else "Client_Divers"
+    filename = f"Facture_{invoice.id}_{client_name.replace(' ', '_')}.pdf"
     filepath = os.path.join(invoices_dir, filename)
     
     c = canvas.Canvas(filepath, pagesize=letter)
@@ -35,24 +36,31 @@ def create_invoice_pdf(invoice, app_dir):
     c.setFont("Helvetica-Bold", 14)
     c.drawString(400, height - 110, "Client:")
     c.setFont("Helvetica", 12)
-    c.drawString(400, height - 130, invoice.client.name)
-    c.drawString(400, height - 150, f"Tél: {invoice.client.phone or 'N/A'}")
-    c.drawString(400, height - 170, f"Email: {invoice.client.email or 'N/A'}")
-    c.drawString(400, height - 190, f"Adr: {invoice.client.address or 'N/A'}")
+    client_name_disp = invoice.client.name if invoice.client else "Client Divers"
+    client_phone = invoice.client.phone if invoice.client and invoice.client.phone else "N/A"
+    client_email = invoice.client.email if invoice.client and invoice.client.email else "N/A"
+    client_address = invoice.client.address if invoice.client and invoice.client.address else "N/A"
+    
+    c.drawString(400, height - 130, client_name_disp)
+    c.drawString(400, height - 150, f"Tél: {client_phone}")
+    c.drawString(400, height - 170, f"Email: {client_email}")
+    c.drawString(400, height - 190, f"Adr: {client_address}")
     
     # Line Items Header
     y = height - 240
     c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, y, "N°")
     c.drawString(100, y, "Description")
     c.drawString(300, y, "Quantité")
     c.drawString(400, y, "PU (GNF)")
     c.drawString(500, y, "Total (GNF)")
-    c.line(100, y - 5, 580, y - 5)
+    c.line(50, y - 5, 580, y - 5)
     
     # Line Items
     y -= 25
     c.setFont("Helvetica", 12)
-    for item in invoice.items:
+    for index, item in enumerate(invoice.items, start=1):
+        c.drawString(50, y, str(index))
         c.drawString(100, y, item.description[:30]) # Truncate long descriptions
         c.drawString(300, y, str(item.quantity))
         c.drawString(400, y, f"{item.unit_price:,.0f}")

@@ -110,17 +110,76 @@ class POSScreen(MDScreen):
             user_id = app.user_session.user.id if app.user_session.user else 1
             
             db = database.SessionLocal()
-            crud.process_sale(db, user_id, items)
+            new_sale = crud.process_sale(db, user_id, items)
             toast("Vente validée!")
             
-            self.cart = {}
-            self.update_cart_ui()
-            self.load_products() # Refresh stock
+            self.last_sale_items = []
+            for pid, item in self.cart.items():
+                self.last_sale_items.append({
+                    "description": item['name'],
+                    "quantity": item['qty'],
+                    "unit_price": item['price']
+                })
+            self.last_sale_id = new_sale.id
             
-            # Refresh Dashboard
-            app.refresh_dashboard()
+            from kivymd.uix.dialog import MDDialog
+            from kivymd.uix.button import MDFlatButton
+            if not getattr(self, "invoice_dialog", None):
+                self.invoice_dialog = MDDialog(
+                    title="Générer une facture ?",
+                    text="Voulez-vous générer une facture pour cette vente ?",
+                    buttons=[
+                        MDFlatButton(text="NON", on_release=self.close_invoice_dialog),
+                        MDFlatButton(text="OUI", on_release=self.generate_invoice_from_pos),
+                    ],
+                )
+            self.invoice_dialog.open()
             
             db.close()
         except Exception as e:
             toast(f"Erreur: {str(e)}")
+
+    def reset_pos(self):
+        self.cart = {}
+        self.update_cart_ui()
+        self.load_products() # Refresh stock
+        from kivymd.app import MDApp
+        app = MDApp.get_running_app()
+        app.refresh_dashboard()
+
+    def close_invoice_dialog(self, *args):
+        if self.invoice_dialog:
+            self.invoice_dialog.dismiss()
+        self.reset_pos()
+
+    def generate_invoice_from_pos(self, *args):
+        if self.invoice_dialog:
+            self.invoice_dialog.dismiss()
+            
+        db = database.SessionLocal()
+        try:
+            new_invoice = crud.create_invoice(db, client_id=None, items=self.last_sale_items, sale_id=self.last_sale_id)
+            from data.models import Invoice
+            db.refresh(new_invoice)
+            
+            import os
+            from utils.pdf_generator import create_invoice_pdf
+            app_dir = os.path.expanduser("~/.smartgestion")
+            pdf_path = create_invoice_pdf(new_invoice, app_dir)
+            toast("Facture générée")
+            # Open PDF with default system viewer
+            try:
+                os.startfile(pdf_path)
+            except AttributeError:
+                # Fallback for non-Windows if needed
+                import subprocess
+                import platform
+                if platform.system() == 'Darwin':
+                    subprocess.call(('open', pdf_path))
+                else:
+                    subprocess.call(('xdg-open', pdf_path))
+        except Exception as e:
+            toast(f"Erreur PDF/Facture: {e}")
+        db.close()
+        self.reset_pos()
 
