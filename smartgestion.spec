@@ -29,7 +29,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='SmartGestion',
+    name='SmartGestion1.1',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
