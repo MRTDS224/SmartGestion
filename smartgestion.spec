@@ -10,7 +10,7 @@ a = Analysis(
     datas=[
         ('ui/screens/*.kv', 'ui/screens'),
         ('assets/*', 'assets'),
-        ('madina_stock.db', '.') # Include local DB if present, though ideally it's created on run
+        ('smart_gestion.db', '.') # Include local DB if present, though ideally it's created on run
     ],
     hiddenimports=['psycopg2', 'kivymd.uix.datatables', 'kivymd.uix.dialog', 'kivymd.uix.boxlayout'],
     hookspath=[kivymd_hooks_path],

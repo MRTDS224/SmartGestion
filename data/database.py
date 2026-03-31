@@ -11,7 +11,7 @@ import os
 APP_DIR = os.path.expanduser("~/.smartgestion")
 os.makedirs(APP_DIR, exist_ok=True)
 
-DEFAULT_DB_PATH = os.path.join(APP_DIR, "madina_stock.db")
+DEFAULT_DB_PATH = os.path.join(APP_DIR, "smart_gestion.db")
 DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH}")
 
 # If using PostgreSQL:
